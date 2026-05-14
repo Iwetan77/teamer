@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Bell } from 'lucide-react'
+import { Bell, Building2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthContext'
 import { useOrg } from '../../context/OrgContext'
@@ -7,14 +7,16 @@ import { formatDistanceToNow } from 'date-fns'
 import toast from 'react-hot-toast'
 
 export function NotificationBell() {
-  const { user, acceptInvite } = useAuth()
+  const { user, acceptInvite, declineInvite, pendingInvites } = useAuth()
   const { refetch } = useOrg()
   const [notifications, setNotifications] = useState([])
   const [open, setOpen] = useState(false)
   const [accepting, setAccepting] = useState(null)
+  const [declining, setDeclining] = useState(null)
   const ref = useRef()
 
   const unread = notifications.filter(n => !n.read).length
+  const totalBadge = unread + pendingInvites.length
 
   useEffect(() => {
     if (!user) return
@@ -50,32 +52,35 @@ export function NotificationBell() {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })))
   }
 
-  async function markRead(id) {
-    await supabase.from('notifications').update({ read: true }).eq('id', id)
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n))
-  }
-
-  async function handleAcceptInvite(n) {
-    const token = n.link?.split('token=')[1]
-    if (!token) return
-    setAccepting(n.id)
-    const { error } = await acceptInvite(token)
+  async function handleAcceptInvite(invite) {
+    setAccepting(invite.invite_token)
+    const { error } = await acceptInvite(invite.invite_token)
     setAccepting(null)
     if (error) { toast.error('Failed to accept invite'); return }
-    await markRead(n.id)
-    // Extract org name from notification body for toast
-    const orgName = n.title?.replace("You've been invited to ", '') || 'the workspace'
-    await refetch()
-    toast.success(`Welcome to ${orgName}!`)
+    await refetch(invite.org_id)
+    toast.success(`Welcome to ${invite.organizations?.name}!`)
+  }
+
+  async function handleDeclineInvite(invite) {
+    setDeclining(invite.invite_token)
+    await declineInvite(invite.invite_token)
+    setDeclining(null)
+    toast(`Invite to ${invite.organizations?.name} declined`, { icon: '👋' })
   }
 
   return (
     <div className="relative" ref={ref}>
-      <button className="btn-ghost relative p-2" onClick={() => { setOpen(!open); if (!open) markAllRead() }}>
+      <button
+        className="btn-ghost relative p-2"
+        onClick={() => {
+          setOpen(v => !v)
+          if (!open) markAllRead()
+        }}
+      >
         <Bell size={18} />
-        {unread > 0 && (
+        {totalBadge > 0 && (
           <span className="absolute top-1 right-1 w-4 h-4 rounded-full text-white text-xs flex items-center justify-center" style={{ background: 'var(--accent)', fontSize: 10 }}>
-            {unread > 9 ? '9+' : unread}
+            {totalBadge > 9 ? '9+' : totalBadge}
           </span>
         )}
       </button>
@@ -88,8 +93,39 @@ export function NotificationBell() {
               <button className="text-xs" style={{ color: 'var(--accent)' }} onClick={markAllRead}>Mark all read</button>
             )}
           </div>
-          <div className="max-h-80 overflow-y-auto">
-            {notifications.length === 0 ? (
+          <div className="max-h-96 overflow-y-auto">
+            {/* Pending invites always at the top */}
+            {pendingInvites.map(invite => (
+              <div key={invite.id} className="px-4 py-3 border-b" style={{ borderColor: 'var(--border)', background: 'var(--accent-light)' }}>
+                <div className="flex items-center gap-2 mb-1">
+                  <Building2 size={13} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+                  <p className="text-sm font-medium">Workspace invite</p>
+                </div>
+                <p className="text-xs mb-2" style={{ color: 'var(--text-2)' }}>
+                  You've been invited to join <strong>{invite.organizations?.name}</strong>
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    className="btn-primary py-1 px-3 text-xs"
+                    onClick={() => handleAcceptInvite(invite)}
+                    disabled={accepting === invite.invite_token}
+                  >
+                    {accepting === invite.invite_token ? 'Joining...' : 'Accept'}
+                  </button>
+                  <button
+                    className="btn-ghost py-1 px-3 text-xs"
+                    onClick={() => handleDeclineInvite(invite)}
+                    disabled={declining === invite.invite_token}
+                    style={{ color: '#ef4444' }}
+                  >
+                    {declining === invite.invite_token ? '...' : 'Decline'}
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {/* Regular notifications */}
+            {notifications.length === 0 && pendingInvites.length === 0 ? (
               <p className="text-sm text-center py-8" style={{ color: 'var(--text-3)' }}>No notifications yet</p>
             ) : notifications.map(n => (
               <div
@@ -100,15 +136,6 @@ export function NotificationBell() {
                 <p className="text-sm font-medium">{n.title}</p>
                 {n.body && <p className="text-xs mt-0.5" style={{ color: 'var(--text-2)' }}>{n.body}</p>}
                 <p className="text-xs mt-1" style={{ color: 'var(--text-3)' }}>{formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}</p>
-                {n.type === 'workspace_invite' && n.link && (
-                  <button
-                    className="btn-primary py-1 px-3 text-xs mt-2"
-                    onClick={() => handleAcceptInvite(n)}
-                    disabled={accepting === n.id}
-                  >
-                    {accepting === n.id ? 'Joining...' : 'Accept invite'}
-                  </button>
-                )}
               </div>
             ))}
           </div>

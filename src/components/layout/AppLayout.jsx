@@ -1,6 +1,5 @@
 import { Sidebar } from './Sidebar'
 import { NotificationBell } from '../ui/NotificationBell'
-import { PendingInviteBanner } from '../ui/PendingInviteBanner'
 
 export function AppLayout({ children }) {
   return (
@@ -10,7 +9,6 @@ export function AppLayout({ children }) {
         <div className="flex items-center justify-end pl-14 lg:pl-6 pr-6 py-3 border-b" style={{ borderColor: 'var(--border)' }}>
           <NotificationBell />
         </div>
-        <PendingInviteBanner />
         <div className="p-4 lg:p-6 animate-fade-in">
           {children}
         </div>

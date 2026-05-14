@@ -9,7 +9,7 @@ import toast from 'react-hot-toast'
 import { format } from 'date-fns'
 
 export default function TeamPage() {
-  const { currentOrg, members, isAdmin, inviteMember, shareOwnership, removeMember, myRole, refetchMembers } = useOrg()
+  const { currentOrg, members, isAdmin, inviteMember, shareOwnership, removeMember, revokeInvite, myRole, refetchMembers } = useOrg()
   const { user } = useAuth()
   const [inviteEmail, setInviteEmail] = useState('')
   const [loading, setLoading] = useState(false)
@@ -63,6 +63,12 @@ export default function TeamPage() {
     if (!confirm('Remove this person from the workspace?')) return
     await removeMember(memberId)
     toast.success('Member removed')
+  }
+
+  async function handleRevoke(memberId) {
+    if (!confirm('Revoke this invite?')) return
+    await revokeInvite(memberId)
+    toast.success('Invite revoked')
   }
 
   if (!currentOrg) return <EmptyState icon="👥" title="No workspace" description="Create a workspace to manage your team." />
@@ -181,6 +187,16 @@ export default function TeamPage() {
                     }}
                   >
                     {copiedId === m.id ? <Check size={15} style={{ color: '#22c55e' }} /> : <Copy size={15} />}
+                  </button>
+                )}
+                {isAdmin && (
+                  <button
+                    className="btn-ghost p-1.5"
+                    title="Revoke invite"
+                    onClick={() => handleRevoke(m.id)}
+                    style={{ color: '#ef4444' }}
+                  >
+                    <Trash2 size={15} />
                   </button>
                 )}
               </div>

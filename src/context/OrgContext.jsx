@@ -158,6 +158,11 @@ export function OrgProvider({ children }) {
     await fetchMembers(currentOrg.id)
   }
 
+  async function revokeInvite(memberId) {
+    await supabase.from('org_members').update({ status: 'removed' }).eq('id', memberId)
+    await fetchMembers(currentOrg.id)
+  }
+
   async function deleteOrg() {
     if (!currentOrg) return { error: 'No org selected' }
     const { error } = await supabase.from('organizations').delete().eq('id', currentOrg.id)
@@ -178,6 +183,7 @@ export function OrgProvider({ children }) {
       createOrg, inviteMember, shareOwnership, removeMember, deleteOrg,
       refetch: (selectOrgId) => fetchOrgs(selectOrgId),
       refetchMembers: () => currentOrg && fetchMembers(currentOrg.id),
+      revokeInvite,
     }}>
       {children}
     </OrgContext.Provider>

@@ -72,6 +72,15 @@ export function AuthProvider({ children }) {
     return { error: error || data?.error }
   }
 
+  async function declineInvite(token) {
+    await supabase.from('org_members').update({ status: 'removed' }).eq('invite_token', token)
+    await supabase.from('notifications').update({ read: true })
+      .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+      .eq('type', 'workspace_invite')
+      .like('link', `%${token}%`)
+    setPendingInvites(prev => prev.filter(i => i.invite_token !== token))
+  }
+
   function dismissInvite(token) {
     setPendingInvites(prev => prev.filter(i => i.invite_token !== token))
   }
@@ -102,7 +111,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, pendingInvites, signInWithGoogle, signOut, updateProfile, acceptInvite, dismissInvite, refetchProfile: () => fetchProfile(user?.id) }}>
+    <AuthContext.Provider value={{ user, profile, loading, pendingInvites, signInWithGoogle, signOut, updateProfile, acceptInvite, declineInvite, dismissInvite, refetchProfile: () => fetchProfile(user?.id) }}>
       {children}
     </AuthContext.Provider>
   )
