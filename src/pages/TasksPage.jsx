@@ -24,13 +24,12 @@ export default function TasksPage() {
     if (currentOrg) fetchTasks()
   }, [currentOrg])
 
-  // Realtime updates
   useEffect(() => {
     if (!currentOrg) return
-    const sub = supabase.channel(`tasks-${currentOrg.id}`)
+    const channel = supabase.channel(`tasks:${currentOrg.id}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks', filter: `org_id=eq.${currentOrg.id}` }, () => fetchTasks())
       .subscribe()
-    return () => sub.unsubscribe()
+    return () => supabase.removeChannel(channel)
   }, [currentOrg])
 
   async function fetchTasks() {
@@ -40,7 +39,11 @@ export default function TasksPage() {
       .select('*, profiles(full_name, avatar_url, skill)')
       .eq('org_id', currentOrg.id)
       .order('created_at', { ascending: false })
-    if (data) setTasks(data)
+    if (data) {
+      setTasks(data)
+      // Keep open modal in sync with latest task data
+      setSelectedTask(prev => prev ? (data.find(t => t.id === prev.id) ?? prev) : null)
+    }
     setLoading(false)
   }
 
