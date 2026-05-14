@@ -73,11 +73,13 @@ export function OrgProvider({ children }) {
   }
 
   async function fetchMembers(orgId) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('org_members')
       .select('*, profiles(*)')
       .eq('org_id', orgId)
       .neq('status', 'removed')
+    if (error) console.error('[fetchMembers] Supabase error:', error)
+    console.log('[fetchMembers] orgId:', orgId, 'rows:', data?.length, data)
     if (data) setMembers(data)
     const me = data?.find(m => m.user_id === user?.id)
     if (me) setMyRole(me.role)
