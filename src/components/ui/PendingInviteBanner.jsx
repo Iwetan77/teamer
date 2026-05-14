@@ -19,7 +19,7 @@ export function PendingInviteBanner() {
       toast.error('Failed to accept invite. Try again.')
       return
     }
-    await refetch()
+    await refetch(invite.org_id)
     toast.success(`Welcome to ${invite.organizations?.name}!`)
   }
 

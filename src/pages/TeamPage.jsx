@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useOrg } from '../context/OrgContext'
 import { useAuth } from '../context/AuthContext'
-import { supabase } from '../lib/supabase'
 import { Avatar } from '../components/ui/Avatar'
 import { EmptyState } from '../components/ui/EmptyState'
 import { getSkill } from '../lib/utils'
@@ -15,16 +14,6 @@ export default function TeamPage() {
   const [inviteEmail, setInviteEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [copiedId, setCopiedId] = useState(null)
-
-  useEffect(() => {
-    if (!currentOrg) return
-    const channel = supabase.channel(`org-members:${currentOrg.id}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'org_members', filter: `org_id=eq.${currentOrg.id}` }, () => {
-        refetchMembers()
-      })
-      .subscribe()
-    return () => supabase.removeChannel(channel)
-  }, [currentOrg])
 
   async function handleInvite() {
     if (!inviteEmail.trim()) return

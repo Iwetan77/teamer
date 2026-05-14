@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from './AuthContext'
 
@@ -11,37 +11,61 @@ export function OrgProvider({ children }) {
   const [members, setMembers] = useState([])
   const [loading, setLoading] = useState(true)
   const [myRole, setMyRole] = useState(null)
+  const currentOrgRef = useRef(null)
 
   useEffect(() => {
     if (user) fetchOrgs()
-    else { setOrgs([]); setCurrentOrg(null); setLoading(false) }
+    else { setOrgs([]); setCurrentOrg(null); setMembers([]); setLoading(false) }
   }, [user])
 
+  // Keep ref in sync so realtime callback always has latest org
   useEffect(() => {
+    currentOrgRef.current = currentOrg
     if (currentOrg) {
       fetchMembers(currentOrg.id)
       localStorage.setItem('teamer-last-org', currentOrg.id)
     }
   }, [currentOrg])
 
-  async function fetchOrgs() {
+  // Global realtime: keep members fresh on every page, not just TeamPage
+  useEffect(() => {
+    if (!user) return
+    const channel = supabase.channel(`org-members-global:${user.id}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'org_members' }, (payload) => {
+        const orgId = payload.new?.org_id || payload.old?.org_id
+        if (orgId && orgId === currentOrgRef.current?.id) {
+          fetchMembers(orgId)
+        }
+        // If user's own membership changed (e.g. they were removed), refetch orgs
+        if (payload.new?.user_id === user.id || payload.old?.user_id === user.id) {
+          fetchOrgs()
+        }
+      })
+      .subscribe()
+    return () => supabase.removeChannel(channel)
+  }, [user])
+
+  async function fetchOrgs(selectOrgId = null) {
     setLoading(true)
     const { data } = await supabase
       .from('org_members')
       .select('org_id, role, status, organizations(*)')
       .eq('user_id', user.id)
       .eq('status', 'active')
-    
+
     if (data) {
       const orgsData = data
         .filter(d => d.organizations?.id)
         .map(d => ({ ...d.organizations, myRole: d.role }))
       setOrgs(orgsData)
-      const lastId = localStorage.getItem('teamer-last-org')
-      const last = orgsData.find(o => o.id === lastId)
-      setCurrentOrg(last || orgsData[0] || null)
-      if (last || orgsData[0]) {
-        const role = data.find(d => d.org_id === (last?.id || orgsData[0]?.id))?.role
+
+      // selectOrgId takes priority (e.g. after accepting invite)
+      const targetId = selectOrgId || localStorage.getItem('teamer-last-org')
+      const target = orgsData.find(o => o.id === targetId)
+      const selected = target || orgsData[0] || null
+      setCurrentOrg(selected)
+      if (selected) {
+        const role = data.find(d => d.org_id === selected.id)?.role
         setMyRole(role)
       }
     }
@@ -75,14 +99,13 @@ export function OrgProvider({ children }) {
       status: 'active',
       joined_at: new Date().toISOString()
     })
-    await fetchOrgs()
+    await fetchOrgs(org.id)
     return { data: org }
   }
 
   async function inviteMember(email) {
     if (!currentOrg) return { error: 'No org selected' }
 
-    // Check if already a member or already invited in this org
     const { data: existingMember } = await supabase
       .from('org_members')
       .select('id, status, invite_token')
@@ -94,11 +117,9 @@ export function OrgProvider({ children }) {
       return { error: { code: '23505', message: 'This person is already in your workspace.' } }
     }
     if (existingMember?.status === 'invited') {
-      // Return existing invite so admin can re-copy the link
       return { data: existingMember, userExists: false, resent: true }
     }
 
-    // Check if this email has a Teamer profile
     const { data: existingProfile } = await supabase
       .from('profiles')
       .select('id, email')
@@ -112,13 +133,12 @@ export function OrgProvider({ children }) {
       .single()
     if (error) return { error }
 
-    // If the invitee already has an account, send them an in-app notification
     if (existingProfile?.id) {
       await supabase.from('notifications').insert({
         user_id: existingProfile.id,
         type: 'workspace_invite',
         title: `You've been invited to ${currentOrg.name}`,
-        body: `Tap to view and accept your invite to join ${currentOrg.name}.`,
+        body: `Accept the invite to join ${currentOrg.name} on Teamer.`,
         link: `/invite?token=${data.invite_token}`,
       })
     }
@@ -152,11 +172,15 @@ export function OrgProvider({ children }) {
   const isAdmin = myRole === 'owner' || myRole === 'admin'
 
   return (
-    <OrgContext.Provider value={{ orgs, currentOrg, setCurrentOrg, members, loading, myRole, isAdmin, createOrg, inviteMember, shareOwnership, removeMember, deleteOrg, refetch: fetchOrgs, refetchMembers: () => fetchMembers(currentOrg?.id) }}>
+    <OrgContext.Provider value={{
+      orgs, currentOrg, setCurrentOrg, members, loading, myRole, isAdmin,
+      createOrg, inviteMember, shareOwnership, removeMember, deleteOrg,
+      refetch: (selectOrgId) => fetchOrgs(selectOrgId),
+      refetchMembers: () => currentOrg && fetchMembers(currentOrg.id),
+    }}>
       {children}
     </OrgContext.Provider>
   )
 }
-
 
 export const useOrg = () => useContext(OrgContext)
