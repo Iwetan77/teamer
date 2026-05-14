@@ -31,16 +31,18 @@ export default function TeamPage() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(inviteEmail)) return toast.error('Invalid email address')
     setLoading(true)
-    const { data, error, userExists } = await inviteMember(inviteEmail.trim().toLowerCase())
+    const { data, error, userExists, resent } = await inviteMember(inviteEmail.trim().toLowerCase())
     setLoading(false)
     if (error) {
-      if (error.code === '23505') return toast.error('This person is already in your workspace.')
+      if (error.code === '23505') return toast.error('This person is already an active member.')
       return toast.error(error.message || 'Failed to create invite')
     }
     const inviteLink = `${window.location.origin}/invite?token=${data.invite_token}`
     await copyToClipboard(inviteLink)
-    if (userExists) {
-      toast.success(`${inviteEmail} has been invited!`)
+    if (resent) {
+      toast(`${inviteEmail} was already invited — link re-copied! Share it with them.`, { icon: '🔗', duration: 6000 })
+    } else if (userExists) {
+      toast.success(`${inviteEmail} has been invited and notified!`)
     } else {
       toast(`Invite link copied! Share it with ${inviteEmail} to join.`, { icon: '🔗', duration: 6000 })
     }

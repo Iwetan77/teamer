@@ -7,6 +7,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [pendingInvites, setPendingInvites] = useState([])
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -18,7 +19,7 @@ export function AuthProvider({ children }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
       if (session?.user) fetchProfile(session.user.id)
-      else { setProfile(null); setLoading(false) }
+      else { setProfile(null); setPendingInvites([]); setLoading(false) }
     })
 
     return () => subscription.unsubscribe()
@@ -33,10 +34,10 @@ export function AuthProvider({ children }) {
 
     if (data) {
       setProfile(data)
+      checkPendingInvites(data.email)
       return
     }
 
-    // Profile missing (trigger race on first sign-in) — create it from OAuth metadata
     const { data: { user: authUser } } = await supabase.auth.getUser()
     const meta = authUser?.user_metadata ?? {}
     const { data: created } = await supabase
@@ -50,6 +51,29 @@ export function AuthProvider({ children }) {
       .select()
       .single()
     setProfile(created)
+    if (created?.email) checkPendingInvites(created.email)
+  }
+
+  async function checkPendingInvites(email) {
+    const { data } = await supabase
+      .from('org_members')
+      .select('id, invite_token, org_id, organizations(name)')
+      .eq('email', email)
+      .eq('status', 'invited')
+    setPendingInvites(data || [])
+  }
+
+  async function acceptInvite(token) {
+    const { data, error } = await supabase.rpc('accept_invitation', { p_token: token })
+    if (!error && !data?.error) {
+      setPendingInvites(prev => prev.filter(i => i.invite_token !== token))
+      return { data }
+    }
+    return { error: error || data?.error }
+  }
+
+  function dismissInvite(token) {
+    setPendingInvites(prev => prev.filter(i => i.invite_token !== token))
   }
 
   async function signInWithGoogle() {
@@ -63,6 +87,7 @@ export function AuthProvider({ children }) {
     await supabase.auth.signOut()
     setUser(null)
     setProfile(null)
+    setPendingInvites([])
   }
 
   async function updateProfile(updates) {
@@ -77,7 +102,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signInWithGoogle, signOut, updateProfile, refetchProfile: () => fetchProfile(user?.id) }}>
+    <AuthContext.Provider value={{ user, profile, loading, pendingInvites, signInWithGoogle, signOut, updateProfile, acceptInvite, dismissInvite, refetchProfile: () => fetchProfile(user?.id) }}>
       {children}
     </AuthContext.Provider>
   )

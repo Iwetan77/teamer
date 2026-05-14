@@ -81,7 +81,25 @@ export function OrgProvider({ children }) {
 
   async function inviteMember(email) {
     if (!currentOrg) return { error: 'No org selected' }
-    const { data: existing } = await supabase
+
+    // Check if already a member or already invited in this org
+    const { data: existingMember } = await supabase
+      .from('org_members')
+      .select('id, status, invite_token')
+      .eq('org_id', currentOrg.id)
+      .eq('email', email)
+      .single()
+
+    if (existingMember?.status === 'active') {
+      return { error: { code: '23505', message: 'This person is already in your workspace.' } }
+    }
+    if (existingMember?.status === 'invited') {
+      // Return existing invite so admin can re-copy the link
+      return { data: existingMember, userExists: false, resent: true }
+    }
+
+    // Check if this email has a Teamer profile
+    const { data: existingProfile } = await supabase
       .from('profiles')
       .select('id, email')
       .eq('email', email)
@@ -89,14 +107,24 @@ export function OrgProvider({ children }) {
 
     const { data, error } = await supabase
       .from('org_members')
-      .insert({ org_id: currentOrg.id, email, invited_by: user.id, status: 'invited', user_id: existing?.id || null })
+      .insert({ org_id: currentOrg.id, email, invited_by: user.id, status: 'invited', user_id: existingProfile?.id || null })
       .select()
       .single()
     if (error) return { error }
-    // In production, trigger Supabase Edge Function to send invite email
-    // supabase.functions.invoke('send-invite', { body: { email, token: data.invite_token, orgName: currentOrg.name } })
+
+    // If the invitee already has an account, send them an in-app notification
+    if (existingProfile?.id) {
+      await supabase.from('notifications').insert({
+        user_id: existingProfile.id,
+        type: 'workspace_invite',
+        title: `You've been invited to ${currentOrg.name}`,
+        body: `Tap to view and accept your invite to join ${currentOrg.name}.`,
+        link: `/invite?token=${data.invite_token}`,
+      })
+    }
+
     await fetchMembers(currentOrg.id)
-    return { data, userExists: !!existing }
+    return { data, userExists: !!existingProfile }
   }
 
   async function shareOwnership(memberId) {
