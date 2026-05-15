@@ -8,7 +8,7 @@ import { CreateTaskModal } from '../components/tasks/CreateTaskModal'
 import { EmptyState } from '../components/ui/EmptyState'
 import { Plus, Filter, LayoutGrid, List } from 'lucide-react'
 
-const STATUSES = ['all', 'assigned', 'in_progress', 'submitted', 'approved']
+const STATUSES = ['all', 'assigned', 'in_progress', 'submitted', 'approved', 'rejected']
 
 export default function TasksPage() {
   const { profile } = useAuth()
@@ -59,6 +59,7 @@ export default function TasksPage() {
     in_progress: filtered.filter(t => t.status === 'in_progress'),
     submitted: filtered.filter(t => t.status === 'submitted'),
     approved: filtered.filter(t => t.status === 'approved'),
+    rejected: filtered.filter(t => t.status === 'rejected'),
   }
 
   const activeMembers = members.filter(m => m.status === 'active' && m.user_id)
