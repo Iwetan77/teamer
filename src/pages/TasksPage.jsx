@@ -64,7 +64,7 @@ export default function TasksPage() {
   const activeMembers = members.filter(m => m.status === 'active' && m.user_id)
 
   if (!currentOrg) return (
-    <EmptyState icon="📋" title="No workspace" description="Create a workspace first to manage tasks." />
+    <EmptyState icon="fi fi-br-clipboard-list" title="No workspace" description="Create a workspace first to manage tasks." />
   )
 
   return (
@@ -138,7 +138,7 @@ export default function TasksPage() {
       ) : (
         <div className="space-y-2">
           {filtered.length === 0 ? (
-            <EmptyState icon="✅" title="No tasks" description="No tasks matching this filter." />
+            <EmptyState icon="fi fi-br-check-circle" title="No tasks" description="No tasks matching this filter." />
           ) : filtered.map(t => (
             <TaskCard key={t.id} task={t} onClick={setSelectedTask} />
           ))}

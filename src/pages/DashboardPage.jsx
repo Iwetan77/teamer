@@ -39,7 +39,7 @@ export default function DashboardPage() {
   if (!currentOrg) return (
     <div>
       <EmptyState
-        icon="🏢"
+        icon="fi fi-br-building"
         title="No workspace yet"
         description="Create your first workspace to invite your team and start assigning tasks."
         action={<button className="btn-primary" onClick={() => setCreateOrgOpen(true)}><Plus size={16} /> Create workspace</button>}
@@ -63,7 +63,7 @@ export default function DashboardPage() {
     <div className="max-w-5xl mx-auto space-y-6">
       {/* Welcome */}
       <div>
-        <h1 className="section-title text-2xl">Good {getGreeting()}, {profile?.full_name?.split(' ')[0]} 👋</h1>
+        <h1 className="section-title text-2xl">Good {getGreeting()}, {profile?.full_name?.split(' ')[0]}</h1>
         <p className="text-sm mt-1" style={{ color: 'var(--text-2)' }}>{currentOrg.name} · {format(new Date(), 'EEEE, MMMM d')}</p>
       </div>
 
@@ -113,7 +113,7 @@ export default function DashboardPage() {
         <div className="space-y-4">
           {/* Announcements */}
           <div className="card p-4">
-            <h2 className="section-title text-sm mb-3">📢 Announcements</h2>
+            <h2 className="section-title text-sm mb-3 flex items-center gap-1.5"><i className="fi fi-br-megaphone" style={{ fontSize: 13 }} /> Announcements</h2>
             {announcements.length === 0 ? (
               <p className="text-xs" style={{ color: 'var(--text-3)' }}>No announcements yet.</p>
             ) : announcements.map(a => (
@@ -130,7 +130,7 @@ export default function DashboardPage() {
 
           {/* Team */}
           <div className="card p-4">
-            <h2 className="section-title text-sm mb-3">👥 Team</h2>
+            <h2 className="section-title text-sm mb-3 flex items-center gap-1.5"><i className="fi fi-br-users" style={{ fontSize: 13 }} /> Team</h2>
             <div className="space-y-2">
               {activeMembers.map(m => {
                 const skill = getSkill(m.profiles?.skill)
@@ -139,7 +139,7 @@ export default function DashboardPage() {
                     <Avatar name={m.profiles?.full_name || m.email} src={m.profiles?.avatar_url} size={28} />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium truncate">{m.profiles?.full_name || m.email}</p>
-                      <p className="text-xs" style={{ color: 'var(--text-3)' }}>{skill.icon} {skill.label}</p>
+                      <p className="text-xs flex items-center gap-1" style={{ color: 'var(--text-3)' }}><i className={skill.icon} style={{ fontSize: 11 }} /> {skill.label}</p>
                     </div>
                     {m.role !== 'member' && (
                       <span className="badge text-xs" style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>{m.role}</span>

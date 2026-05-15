@@ -78,7 +78,7 @@ export default function TeamPage() {
     toast.success('Role updated')
   }
 
-  if (!currentOrg) return <EmptyState icon="👥" title="No workspace" description="Create a workspace to manage your team." />
+  if (!currentOrg) return <EmptyState icon="fi fi-br-users" title="No workspace" description="Create a workspace to manage your team." />
 
   const active = members.filter(m => m.status === 'active')
   const invited = members.filter(m => m.status === 'invited')
@@ -136,8 +136,9 @@ export default function TeamPage() {
                       <p className="text-sm font-medium truncate">{m.profiles?.full_name || m.email}</p>
                       {isMe && <span className="badge text-xs" style={{ background: 'var(--surface-2)', color: 'var(--text-3)' }}>You</span>}
                       {m.role !== 'member' && (
-                        <span className="badge text-xs" style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>
-                          {m.role === 'owner' ? '👑 owner' : '🛡️ admin'}
+                        <span className="badge text-xs flex items-center gap-1" style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>
+                          <i className={m.role === 'owner' ? 'fi fi-br-crown' : 'fi fi-br-shield'} style={{ fontSize: 10 }} />
+                          {m.role}
                         </span>
                       )}
                     </div>
@@ -160,7 +161,7 @@ export default function TeamPage() {
                           onClick={() => isAdmin && !isMe && setEditingSkillId(m.id)}
                           title={isAdmin && !isMe ? 'Click to change role' : undefined}
                         >
-                          {skill.icon} {skill.label}
+                          <i className={skill.icon} style={{ fontSize: 11 }} /> {skill.label}
                           {isAdmin && !isMe && <ChevronDown size={10} />}
                         </button>
                       )}

@@ -62,7 +62,9 @@ export default function InvitePage() {
 
         {status === 'success' && (
           <>
-            <div className="text-3xl mb-3">🎉</div>
+            <div className="mb-3 flex items-center justify-center w-12 h-12 rounded-2xl mx-auto" style={{ background: '#f0fdf4' }}>
+              <i className="fi fi-br-check-circle" style={{ fontSize: 24, color: '#22c55e' }} />
+            </div>
             <h1 className="section-title text-lg mb-2">Welcome to {orgName}!</h1>
             <p className="text-sm" style={{ color: 'var(--text-2)' }}>Redirecting to your workspace...</p>
           </>
@@ -78,7 +80,9 @@ export default function InvitePage() {
 
         {status === 'error' && (
           <>
-            <div className="text-3xl mb-3">❌</div>
+            <div className="mb-3 flex items-center justify-center w-12 h-12 rounded-2xl mx-auto" style={{ background: '#fef2f2' }}>
+              <i className="fi fi-br-cross-circle" style={{ fontSize: 24, color: '#ef4444' }} />
+            </div>
             <h1 className="section-title text-lg mb-2">Invite error</h1>
             <p className="text-sm" style={{ color: 'var(--text-2)' }}>{error}</p>
           </>

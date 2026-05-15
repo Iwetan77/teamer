@@ -79,7 +79,7 @@ export default function AnnouncementsPage() {
     toast.success('Deleted')
   }
 
-  if (!currentOrg) return <EmptyState icon="📢" title="No workspace" description="Create a workspace first." />
+  if (!currentOrg) return <EmptyState icon="fi fi-br-megaphone" title="No workspace" description="Create a workspace first." />
 
   return (
     <div className="max-w-2xl mx-auto space-y-5">
@@ -97,7 +97,7 @@ export default function AnnouncementsPage() {
 
       {announcements.length === 0 ? (
         <EmptyState
-          icon="📢"
+          icon="fi fi-br-megaphone"
           title="No announcements yet"
           description="Post updates, news, or reminders to your whole team here."
           action={isAdmin ? <button className="btn-primary" onClick={() => setCreateOpen(true)}><Plus size={16} /> Make first announcement</button> : null}

@@ -31,13 +31,13 @@ export default function LandingPage() {
         <div className="max-w-xl mx-auto animate-fade-in">
           {/* Office icon cluster */}
           <div className="flex items-center justify-center gap-3 mb-8">
-            {['💻', '🎨', '📢', '🔬', '📊'].map((e, i) => (
+            {['fi-br-laptop', 'fi-br-paint-brush', 'fi-br-megaphone', 'fi-br-flask', 'fi-br-chart-histogram'].map((icon, i) => (
               <div
                 key={i}
-                className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
+                className="w-10 h-10 rounded-xl flex items-center justify-center"
                 style={{ background: 'var(--surface)', border: '1px solid var(--border)', transform: `rotate(${(i - 2) * 4}deg)` }}
               >
-                {e}
+                <i className={`fi ${icon}`} style={{ fontSize: 18, color: 'var(--accent)' }} />
               </div>
             ))}
           </div>
@@ -67,12 +67,14 @@ export default function LandingPage() {
           {/* Features */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-16 text-left">
             {[
-              { icon: '🎯', title: 'Role-aware tasks', desc: 'Designers get file uploads, devs get GitHub links, researchers get doc slots.' },
-              { icon: '🏢', title: 'Your digital office', desc: 'Announcements, team directory, activity feed — a real remote workspace.' },
-              { icon: '✅', title: 'Track everything', desc: 'Assigned → In Progress → Submitted → Approved. Nothing slips through.' },
+              { icon: 'fi-br-target', title: 'Role-aware tasks', desc: 'Designers get file uploads, devs get GitHub links, researchers get doc slots.' },
+              { icon: 'fi-br-building', title: 'Your digital office', desc: 'Announcements, team directory, activity feed — a real remote workspace.' },
+              { icon: 'fi-br-check-circle', title: 'Track everything', desc: 'Assigned → In Progress → Submitted → Approved. Nothing slips through.' },
             ].map((f, i) => (
               <div key={i} className="card p-4 animate-slide-up" style={{ animationDelay: `${i * 0.1}s` }}>
-                <div className="text-2xl mb-2">{f.icon}</div>
+                <div className="mb-2 w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'var(--accent-light)' }}>
+                  <i className={`fi ${f.icon}`} style={{ fontSize: 18, color: 'var(--accent)' }} />
+                </div>
                 <p className="text-sm font-medium mb-1">{f.title}</p>
                 <p className="text-xs" style={{ color: 'var(--text-2)' }}>{f.desc}</p>
               </div>

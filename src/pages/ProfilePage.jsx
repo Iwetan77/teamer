@@ -39,8 +39,8 @@ export default function ProfilePage() {
             <p className="font-semibold text-base">{profile?.full_name || 'Your name'}</p>
             <p className="text-sm" style={{ color: 'var(--text-2)' }}>{profile?.email}</p>
             {skill && (
-              <span className="badge mt-1" style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>
-                {currentSkill.icon} {currentSkill.label}
+              <span className="badge mt-1 flex items-center gap-1" style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>
+                <i className={currentSkill.icon} style={{ fontSize: 11 }} /> {currentSkill.label}
               </span>
             )}
           </div>
@@ -66,7 +66,7 @@ export default function ProfilePage() {
                   }}
                   onClick={() => setSkill(s.value)}
                 >
-                  <span className="text-lg">{s.icon}</span>
+                  <i className={s.icon} style={{ fontSize: 20 }} />
                   {s.label}
                 </button>
               ))}

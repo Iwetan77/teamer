@@ -16,7 +16,7 @@ export default function SettingsPage() {
   const [deleting, setDeleting] = useState(false)
 
   if (!currentOrg || !isAdmin) return (
-    <EmptyState icon="⚙️" title="No access" description="You need admin access to view settings." />
+    <EmptyState icon="fi fi-br-settings" title="No access" description="You need admin access to view settings." />
   )
 
   async function handleSave() {

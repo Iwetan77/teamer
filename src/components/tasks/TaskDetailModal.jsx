@@ -235,7 +235,7 @@ export function TaskDetailModal({ task, open, onClose, onUpdate }) {
         {/* Submission area */}
         {(canSubmit || task.submission_url || task.submission_note || attachments.length > 0) && (
           <div className="rounded-lg p-4 space-y-3" style={{ background: 'var(--surface-2)' }}>
-            <p className="text-sm font-medium">{subType.icon} {subType.label}</p>
+            <p className="text-sm font-medium flex items-center gap-1.5"><i className={subType.icon} style={{ fontSize: 14 }} /> {subType.label}</p>
 
             {(subType.type === 'github' || subType.type === 'mixed') && (
               <input
